@@ -1,0 +1,8 @@
+
+t
+java:S3776L"RRefactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.(¼ôÊ¦ûÿÿÿÿ8á­¥²2
+M	java:S106‚"+Replace this use of System.out by a logger.( Ü¡üÿÿÿÿ8æ­¥²2
+P
+java:S1172‰"2Remove this unused method parameter "bestFitness".(‹èÁ‹8ç­¥²2
+H	java:S106›"+Replace this use of System.out by a logger.(¢ÆÔ¯8ë­¥²2
+H	java:S106œ"+Replace this use of System.out by a logger.(Ñ¡²Ş8ì­¥²2
