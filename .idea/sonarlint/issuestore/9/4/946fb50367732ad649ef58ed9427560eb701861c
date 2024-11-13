@@ -1,4 +1,6 @@
 
-n
-java:S3776"RRefactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.(ç8³­²2
-L	java:S106I"+Replace this use of System.out by a logger.(³­ééıÿÿÿÿ8˜³­²2
+L	java:S106"+Replace this use of System.out by a logger.(³­ééıÿÿÿÿ8Õöì°²2
+o
+java:S62044"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹8¿Ô¡±²2
+@
+java:S2119:"Save and re-use this "Random".(²Ì–Àúÿÿÿÿ8Õöì°²2

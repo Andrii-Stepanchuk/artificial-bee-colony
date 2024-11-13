@@ -94,3 +94,7 @@ G.idea/sonarlint/issuestore/f/c/fc65e8efa58b1b3f55388ac2efd6c6343634fc67,5\9\59
 Q.idea/sonarlint/securityhotspotstore/f/c/fc65e8efa58b1b3f55388ac2efd6c6343634fc67,6\1\61b2acb8aa32aff9249e2c44a04cf5c19b749481
 w
 G.idea/sonarlint/issuestore/b/c/bc35f7522388d251554af2a1762c34196778ea0e,9\4\942d0dfd79c07428d39be239d349c66c5a225ec2
+`
+0src/main/java/org/example/algorithm/abc/Bee.java,5\4\542ec9aeaca7d5545e07ca000f8092e16f8483a9
+m
+=src/main/java/org/example/algorithm/abc/FitnessEvaluator.java,7\a\7ac52e5ce3e117b1614ebc1bed1803defb6ebdbe

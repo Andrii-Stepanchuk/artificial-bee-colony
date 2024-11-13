@@ -17,12 +17,33 @@ public class MapOfAreas {
         return new MapBuilder();
     }
 
-    public void addNewAreaDistance(List<Double> areaDistance) {
-        distancesOfAreas.put(distancesOfAreas.size(), areaDistance);
-    }
-
     public Integer getNumberOfAreas() {
         return distancesOfAreas.size();
+    }
+
+    public double calculateRouteFitness(List<Integer> route) {
+        double distance = calculateRouteDistance(route);
+        return 1.0 / (1 + distance);
+    }
+
+    private double calculateRouteDistance(List<Integer> route) {
+        double totalDistance = 0;
+
+        for (int i = 0; i < route.size() - 1; i++) {
+            int fromCity = route.get(i);
+            int toCity = route.get(i + 1);
+            totalDistance += distancesOfAreas.get(fromCity).get(toCity);
+        }
+
+        int lastCity = route.get(route.size() - 1);
+        int startCity = route.get(0);
+        totalDistance += distancesOfAreas.get(lastCity).get(startCity);
+
+        return totalDistance;
+    }
+
+    private void addNewAreaDistance(List<Double> areaDistance) {
+        distancesOfAreas.put(distancesOfAreas.size(), areaDistance);
     }
 
     @NoArgsConstructor

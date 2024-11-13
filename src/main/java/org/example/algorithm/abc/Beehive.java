@@ -1,5 +1,6 @@
 package org.example.algorithm.abc;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -16,7 +17,7 @@ public class Beehive {
     private Integer numberOnlookerBees;
     private Integer limitForScoutBeesToAbandonSources;
 
-    private List<List<Integer>> beePopulation;
+    private List<Bee> beePopulation;
 
     @Builder
     public Beehive(MapOfAreas mapOfAreas,
@@ -30,12 +31,6 @@ public class Beehive {
         this.beePopulation = initializeBeePopulation();
     }
 
-    private List<List<Integer>> initializeBeePopulation() {
-        return IntStream.range(0, numberEmployedBees)
-                .mapToObj(employedBee -> generateRandomRoute())
-                .collect(Collectors.toList());
-    }
-
     public List<Integer> generateRandomRoute() {
         List<Integer> route = IntStream
                 .range(0, mapOfAreas.getNumberOfAreas())
@@ -45,5 +40,28 @@ public class Beehive {
 
         return route;
     }
+
+    public double calculateRouteFitness(List<Integer> route) {
+        return mapOfAreas.calculateRouteFitness(route);
+    }
+
+    public List<Integer> generateNewRoute(Bee bee) {
+        Random random = new Random();
+
+        List<Integer> newRoute = new ArrayList<>(bee.getRoute());
+        int city1Index = random.nextInt(bee.getRoute().size());
+        int city2Index = random.nextInt(bee.getRoute().size());
+
+        Collections.swap(newRoute, city1Index, city2Index);
+
+        return newRoute;
+    }
+
+    private List<Bee> initializeBeePopulation() {
+        return IntStream.range(0, numberEmployedBees)
+                .mapToObj(i -> new Bee(generateRandomRoute(), 0.0))
+                .collect(Collectors.toList());
+    }
 }
+
 

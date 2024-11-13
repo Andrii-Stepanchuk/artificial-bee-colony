@@ -1,9 +1,10 @@
 package org.example.algorithm.abc;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Builder;
 
 @Builder
@@ -12,132 +13,88 @@ public class BeeColonyAlgorithm {
     private Beehive beehive;
     private Integer numberOfIterations;
 
-    private static final Random random = new Random();
-
     public BeeResource calculateBestBeeResource() {
-        List<Integer> beesStagnationCounter = new ArrayList<>(Collections.nCopies(beehive.getNumberEmployedBees(), 0));
         BeeResource bestBeeResource = initializeBeeResource();
 
         for (int cycle = 0; cycle < numberOfIterations; cycle++) {
-
-            // Фаза зайнятих бджіл
-            for (int i = 0; i < beehive.getNumberEmployedBees(); i++) {
-                List<Integer> newSolution = generateNewRoute(beehive.getBeePopulation().get(i));
-                double newFitness = calculateRouteFitness(newSolution);
-
-                if (newFitness > calculateRouteFitness(beehive.getBeePopulation().get(i))) {
-                    beehive.getBeePopulation().set(i, newSolution);
-                    beesStagnationCounter.set(i, 0);
-                } else {
-                    beesStagnationCounter.set(i, beesStagnationCounter.get(i) + 1);
-                }
-
-                if (newFitness > bestBeeResource.getRouteDirectionFitness()) {
-                    bestBeeResource = BeeResource.builder()
-                            .routeDirection(new ArrayList<>(newSolution))
-                            .routeDirectionFitness(newFitness)
-                            .build();
-                }
-            }
-
-            // Фаза спостережливих бджіл
-            for (int i = 0; i < beehive.getNumberOnlookerBees(); i++) {
-                int selectedBee = selectOnlookerBee();
-                List<Integer> newSolution = generateNewRoute(beehive.getBeePopulation().get(selectedBee));
-                double newFitness = calculateRouteFitness(newSolution);
-
-                if (newFitness > calculateRouteFitness(beehive.getBeePopulation().get(selectedBee))) {
-                    beehive.getBeePopulation().set(selectedBee, newSolution);
-                    beesStagnationCounter.set(selectedBee, 0);
-                } else {
-                    beesStagnationCounter.set(selectedBee, beesStagnationCounter.get(selectedBee) + 1);
-                }
-
-                if (newFitness > bestBeeResource.getRouteDirectionFitness()) {
-                    bestBeeResource = BeeResource.builder()
-                            .routeDirection(new ArrayList<>(newSolution))
-                            .routeDirectionFitness(newFitness)
-                            .build();
-                }
-            }
-
-            // Фаза розвідників
-            for (int i = 0; i < beehive.getNumberEmployedBees(); i++) {
-                if (beesStagnationCounter.get(i) > beehive.getLimitForScoutBeesToAbandonSources()) {
-                    beehive.getBeePopulation().set(i, beehive.generateRandomRoute());
-                    beesStagnationCounter.set(i, 0);
-                }
-            }
-
-            // Виведення поточного прогресу
+            bestBeeResource = executeEmployedBeesPhase(bestBeeResource);
+            bestBeeResource = executeOnlookerBeesPhase(bestBeeResource);
+            executeScoutsBeesPhase();
             System.out.println("Cycle " + cycle + ": Best fitness = " + bestBeeResource);
         }
 
         return bestBeeResource;
     }
 
-    private int selectOnlookerBee() {
-        List<Double> fitnessValues = beehive.getBeePopulation().stream()
-                .map(this::calculateRouteFitness)
-                .toList();
+    private BeeResource executeEmployedBeesPhase(BeeResource bestBeeResource) {
+        return beehive.getBeePopulation().stream()
+                .limit(beehive.getNumberEmployedBees())
+                .reduce(bestBeeResource, this::executeDefaultBeesPhase, (resource1, resource2) -> resource1);
+    }
+
+    private BeeResource executeOnlookerBeesPhase(BeeResource bestBeeResource) {
+        return IntStream.range(0, beehive.getNumberOnlookerBees())
+                .mapToObj(i -> selectOnlookerBee())
+                .reduce(bestBeeResource, this::executeDefaultBeesPhase, (resource1, resource2) -> resource1);
+    }
+
+    private void executeScoutsBeesPhase() {
+        beehive.getBeePopulation().stream()
+                .limit(beehive.getNumberEmployedBees())
+                .filter(bee -> bee.getStagnationCounter() > beehive.getLimitForScoutBeesToAbandonSources())
+                .forEach(bee -> bee.setNewRouteAndResetStagnation(beehive.generateRandomRoute()));
+    }
+
+    private Bee selectOnlookerBee() {
+        List<Bee> bees = beehive.getBeePopulation();
+        List<Double> fitnessValues = bees.stream()
+                .map(bee -> beehive.calculateRouteFitness(bee.getRoute()))
+                .collect(Collectors.toList());
 
         double totalFitness = fitnessValues.stream()
                 .mapToDouble(Double::doubleValue)
                 .sum();
 
-        double r = random.nextDouble() * totalFitness;
+        double randomSelectionValue = new Random().nextDouble() * totalFitness;
         double cumulative = 0;
 
-        for (int i = 0; i < fitnessValues.size(); i++) {
+        for (int i = 0; i < bees.size(); i++) {
             cumulative += fitnessValues.get(i);
-            if (cumulative >= r) {
-                return i;
+            if (cumulative >= randomSelectionValue) {
+                return bees.get(i);
             }
         }
 
-        return 0;
+        return bees.get(0);
     }
 
-    private static List<Integer> generateNewRoute(List<Integer> currentRoute) {
-        List<Integer> newRoute = new ArrayList<>(currentRoute);
-        int city1Index = random.nextInt(currentRoute.size());
-        int city2Index = random.nextInt(currentRoute.size());
+    private BeeResource executeDefaultBeesPhase(BeeResource bestBeeResource, Bee bee) {
+        List<Integer> newRoute = beehive.generateNewRoute(bee);
+        double newFitness = beehive.calculateRouteFitness(newRoute);
 
-        Collections.swap(newRoute, city1Index, city2Index);
+        if (newFitness > beehive.calculateRouteFitness(bee.getRoute())) {
+            bee.setNewRouteAndResetStagnation(newRoute);
+        } else {
+            bee.increaseStagnationCounter();
+        }
 
-        return newRoute;
-    }
-
-    private BeeResource initializeBeeResource() {
-        List<Integer> routeDirection = beehive.getBeePopulation().get(0);
-        double bestFitness = calculateRouteFitness(routeDirection);
+        if (newFitness < bestBeeResource.getRouteDirectionFitness()) {
+            return bestBeeResource;
+        }
 
         return BeeResource.builder()
-                .routeDirection(routeDirection)
-                .routeDirectionFitness(bestFitness)
+                .routeDirection(new ArrayList<>(newRoute))
+                .routeDirectionFitness(newFitness)
                 .build();
     }
 
-    private double calculateRouteFitness(List<Integer> routeDirection) {
-        double distance = calculateRouteDistance(routeDirection);
-        return 1.0 / (1 + distance);
-    }
+    private BeeResource initializeBeeResource() {
+        Bee bee = beehive.getBeePopulation().get(0);
+        double bestFitness = beehive.calculateRouteFitness(bee.getRoute());
 
-    private double calculateRouteDistance(List<Integer> route) {
-        var distancesOfAreas = beehive.getMapOfAreas().getDistancesOfAreas();
-
-        double totalDistance = 0;
-
-        for (int i = 0; i < route.size() - 1; i++) {
-            int fromCity = route.get(i);
-            int toCity = route.get(i + 1);
-            totalDistance += distancesOfAreas.get(fromCity).get(toCity);
-        }
-
-        int lastCity = route.get(route.size() - 1);
-        int startCity = route.get(0);
-        totalDistance += distancesOfAreas.get(lastCity).get(startCity);
-
-        return totalDistance;
+        return BeeResource.builder()
+                .routeDirection(bee.getRoute())
+                .routeDirectionFitness(bestFitness)
+                .build();
     }
 }
